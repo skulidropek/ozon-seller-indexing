@@ -108,6 +108,16 @@ export const loadState = async (config: IndexerConfig): Promise<IndexerState> =>
   state.diagnosticsArtifacts ??= []
   state.stats.sellerFeedPagesVisited ??= 0
   state.stats.sellerFeedPagesFailed ??= 0
+  if (config.seedSellerUrls.length === 0) {
+    const disabledSeedKeys = new Set(
+      state.pendingSellers.filter((seller) => seller.sourceUrl === "seed").map((seller) => seller.sellerKey)
+    )
+    if (disabledSeedKeys.size > 0) {
+      state.pendingSellers = state.pendingSellers.filter((seller) => seller.sourceUrl !== "seed")
+      state.seenSellerKeys = state.seenSellerKeys.filter((sellerKey) => !disabledSeedKeys.has(sellerKey))
+      state.stats.sellersDiscovered = Math.max(0, state.stats.sellersDiscovered - disabledSeedKeys.size)
+    }
+  }
   const categoryIds = new Set(state.categories.map((category) => category.id))
   const createdAt = state.createdAt
   for (const category of config.categories) {
