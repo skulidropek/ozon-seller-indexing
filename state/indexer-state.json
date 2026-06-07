@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-06-07T12:35:05.354Z",
-  "updatedAt": "2026-06-07T13:31:04.990Z",
+  "updatedAt": "2026-06-07T14:09:04.359Z",
   "categories": [
     {
       "id": "electronics",
@@ -318,8 +318,8 @@
   "seenSellerKeys": [
     "worldofsport"
   ],
-  "blockReason": "ozon_rendered_http_403:/category/electronics-15500/?sorting=rating",
-  "blockedUntil": "2026-06-07T13:34:02.028Z",
+  "blockReason": "ozon_http_403:/seller/",
+  "blockedUntil": "2026-06-07T14:12:04.202Z",
   "stats": {
     "categoryPagesVisited": 0,
     "categoryPagesFailed": 3,
@@ -331,15 +331,26 @@
     "sellersWithLegalDetails": 0,
     "sellersWithoutLegalDetails": 0,
     "sellersFailed": 0,
-    "blocksDetected": 4
+    "blocksDetected": 5,
+    "sellerFeedPagesVisited": 0,
+    "sellerFeedPagesFailed": 1
   },
-  "blockSource": "browser_page",
+  "blockSource": "request_context",
   "diagnosticsArtifacts": [
     "artifacts/diagnostics/20260607133101-category-electronics.html",
     "artifacts/diagnostics/20260607133101-category-electronics.png",
     "artifacts/diagnostics/20260607133101-category-electronics.json",
     "artifacts/diagnostics/20260607133103-seller-worldofsport.html",
     "artifacts/diagnostics/20260607133103-seller-worldofsport.png",
-    "artifacts/diagnostics/20260607133103-seller-worldofsport.json"
-  ]
+    "artifacts/diagnostics/20260607133103-seller-worldofsport.json",
+    "artifacts/diagnostics/20260607140904-request--seller.txt",
+    "artifacts/diagnostics/20260607140904-request--seller.json"
+  ],
+  "sellerFeed": {
+    "status": "pending",
+    "nextPagePath": "/seller/",
+    "lastPageToken": null,
+    "pagesVisited": 0,
+    "updatedAt": "2026-06-07T14:09:04.202Z"
+  }
 }
