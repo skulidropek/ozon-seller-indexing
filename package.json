@@ -1,0 +1,37 @@
+{
+  "name": "ozon-seller-indexing",
+  "version": "0.1.0",
+  "description": "Incremental Ozon seller legal info indexer powered by GitHub Actions",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "index:timed": "node dist/index.js timed",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "ozon",
+    "indexer",
+    "playwright",
+    "seller",
+    "github-actions"
+  ],
+  "author": "rikohomeless",
+  "license": "MIT",
+  "dependencies": {
+    "effect": "^3.19.17",
+    "playwright": "^1.58.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.13",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

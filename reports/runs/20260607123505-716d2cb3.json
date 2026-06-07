@@ -1,0 +1,28 @@
+{
+  "runId": "20260607123505-716d2cb3",
+  "startedAt": "2026-06-07T12:35:05.354Z",
+  "finishedAt": "2026-06-07T12:35:16.300Z",
+  "durationMs": 10947,
+  "shouldContinue": true,
+  "stopReason": "ozon_blocked",
+  "blockReason": "ozon_http_403:/category/electronics-15500/?sorting=rating",
+  "blockedUntil": "2026-06-07T12:35:46.026Z",
+  "stats": {
+    "categoryPagesVisited": 0,
+    "categoryPagesFailed": 1,
+    "productsDiscovered": 0,
+    "productsProcessed": 0,
+    "productsFailed": 0,
+    "sellersDiscovered": 0,
+    "sellersProcessed": 0,
+    "sellersWithLegalDetails": 0,
+    "sellersWithoutLegalDetails": 0,
+    "sellersFailed": 0,
+    "blocksDetected": 1
+  },
+  "queue": {
+    "pendingProducts": 0,
+    "pendingSellers": 0,
+    "unfinishedCategories": 30
+  }
+}

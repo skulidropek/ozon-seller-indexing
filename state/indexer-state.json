@@ -1,0 +1,336 @@
+{
+  "version": 1,
+  "createdAt": "2026-06-07T12:35:05.354Z",
+  "updatedAt": "2026-06-07T12:36:28.183Z",
+  "categories": [
+    {
+      "id": "electronics",
+      "title": "Электроника",
+      "url": "https://www.ozon.ru/category/electronics-15500/?sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/category/electronics-15500/?sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:16.026Z"
+    },
+    {
+      "id": "clothes",
+      "title": "Одежда",
+      "url": "https://www.ozon.ru/search/?text=%D0%9E%D0%B4%D0%B5%D0%B6%D0%B4%D0%B0&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%9E%D0%B4%D0%B5%D0%B6%D0%B4%D0%B0&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "shoes",
+      "title": "Обувь",
+      "url": "https://www.ozon.ru/search/?text=%D0%9E%D0%B1%D1%83%D0%B2%D1%8C&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%9E%D0%B1%D1%83%D0%B2%D1%8C&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "home_garden",
+      "title": "Дом и сад",
+      "url": "https://www.ozon.ru/search/?text=%D0%94%D0%BE%D0%BC%20%D0%B8%20%D1%81%D0%B0%D0%B4&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%94%D0%BE%D0%BC%20%D0%B8%20%D1%81%D0%B0%D0%B4&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "kids",
+      "title": "Детские товары",
+      "url": "https://www.ozon.ru/search/?text=%D0%94%D0%B5%D1%82%D1%81%D0%BA%D0%B8%D0%B5%20%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%94%D0%B5%D1%82%D1%81%D0%BA%D0%B8%D0%B5%20%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "beauty",
+      "title": "Красота и здоровье",
+      "url": "https://www.ozon.ru/search/?text=%D0%9A%D1%80%D0%B0%D1%81%D0%BE%D1%82%D0%B0%20%D0%B8%20%D0%B7%D0%B4%D0%BE%D1%80%D0%BE%D0%B2%D1%8C%D0%B5&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%9A%D1%80%D0%B0%D1%81%D0%BE%D1%82%D0%B0%20%D0%B8%20%D0%B7%D0%B4%D0%BE%D1%80%D0%BE%D0%B2%D1%8C%D0%B5&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "home_appliances",
+      "title": "Бытовая техника",
+      "url": "https://www.ozon.ru/search/?text=%D0%91%D1%8B%D1%82%D0%BE%D0%B2%D0%B0%D1%8F%20%D1%82%D0%B5%D1%85%D0%BD%D0%B8%D0%BA%D0%B0&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%91%D1%8B%D1%82%D0%BE%D0%B2%D0%B0%D1%8F%20%D1%82%D0%B5%D1%85%D0%BD%D0%B8%D0%BA%D0%B0&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "sport",
+      "title": "Спорт и отдых",
+      "url": "https://www.ozon.ru/search/?text=%D0%A1%D0%BF%D0%BE%D1%80%D1%82%20%D0%B8%20%D0%BE%D1%82%D0%B4%D1%8B%D1%85&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%A1%D0%BF%D0%BE%D1%80%D1%82%20%D0%B8%20%D0%BE%D1%82%D0%B4%D1%8B%D1%85&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "repair",
+      "title": "Строительство и ремонт",
+      "url": "https://www.ozon.ru/search/?text=%D0%A1%D1%82%D1%80%D0%BE%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D1%81%D1%82%D0%B2%D0%BE%20%D0%B8%20%D1%80%D0%B5%D0%BC%D0%BE%D0%BD%D1%82&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%A1%D1%82%D1%80%D0%BE%D0%B8%D1%82%D0%B5%D0%BB%D1%8C%D1%81%D1%82%D0%B2%D0%BE%20%D0%B8%20%D1%80%D0%B5%D0%BC%D0%BE%D0%BD%D1%82&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "food",
+      "title": "Продукты питания",
+      "url": "https://www.ozon.ru/search/?text=%D0%9F%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%82%D1%8B%20%D0%BF%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%9F%D1%80%D0%BE%D0%B4%D1%83%D0%BA%D1%82%D1%8B%20%D0%BF%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "pharmacy",
+      "title": "Аптека",
+      "url": "https://www.ozon.ru/search/?text=%D0%90%D0%BF%D1%82%D0%B5%D0%BA%D0%B0&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%90%D0%BF%D1%82%D0%B5%D0%BA%D0%B0&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "pets",
+      "title": "Товары для животных",
+      "url": "https://www.ozon.ru/search/?text=%D0%A2%D0%BE%D0%B2%D0%B0%D1%80%D1%8B%20%D0%B4%D0%BB%D1%8F%20%D0%B6%D0%B8%D0%B2%D0%BE%D1%82%D0%BD%D1%8B%D1%85&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%A2%D0%BE%D0%B2%D0%B0%D1%80%D1%8B%20%D0%B4%D0%BB%D1%8F%20%D0%B6%D0%B8%D0%B2%D0%BE%D1%82%D0%BD%D1%8B%D1%85&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "books",
+      "title": "Книги",
+      "url": "https://www.ozon.ru/search/?text=%D0%9A%D0%BD%D0%B8%D0%B3%D0%B8&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%9A%D0%BD%D0%B8%D0%B3%D0%B8&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "tourism",
+      "title": "Туризм, рыбалка, охота",
+      "url": "https://www.ozon.ru/search/?text=%D0%A2%D1%83%D1%80%D0%B8%D0%B7%D0%BC%20%D1%80%D1%8B%D0%B1%D0%B0%D0%BB%D0%BA%D0%B0%20%D0%BE%D1%85%D0%BE%D1%82%D0%B0&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%A2%D1%83%D1%80%D0%B8%D0%B7%D0%BC%20%D1%80%D1%8B%D0%B1%D0%B0%D0%BB%D0%BA%D0%B0%20%D0%BE%D1%85%D0%BE%D1%82%D0%B0&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "auto_goods",
+      "title": "Автотовары",
+      "url": "https://www.ozon.ru/search/?text=%D0%90%D0%B2%D1%82%D0%BE%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%90%D0%B2%D1%82%D0%BE%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "furniture",
+      "title": "Мебель",
+      "url": "https://www.ozon.ru/search/?text=%D0%9C%D0%B5%D0%B1%D0%B5%D0%BB%D1%8C&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%9C%D0%B5%D0%B1%D0%B5%D0%BB%D1%8C&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "hobby",
+      "title": "Хобби и творчество",
+      "url": "https://www.ozon.ru/search/?text=%D0%A5%D0%BE%D0%B1%D0%B1%D0%B8%20%D0%B8%20%D1%82%D0%B2%D0%BE%D1%80%D1%87%D0%B5%D1%81%D1%82%D0%B2%D0%BE&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%A5%D0%BE%D0%B1%D0%B1%D0%B8%20%D0%B8%20%D1%82%D0%B2%D0%BE%D1%80%D1%87%D0%B5%D1%81%D1%82%D0%B2%D0%BE&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "accessories",
+      "title": "Аксессуары",
+      "url": "https://www.ozon.ru/search/?text=%D0%90%D0%BA%D1%81%D0%B5%D1%81%D1%81%D1%83%D0%B0%D1%80%D1%8B&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%90%D0%BA%D1%81%D0%B5%D1%81%D1%81%D1%83%D0%B0%D1%80%D1%8B&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "jewelry",
+      "title": "Ювелирные украшения",
+      "url": "https://www.ozon.ru/search/?text=%D0%AE%D0%B2%D0%B5%D0%BB%D0%B8%D1%80%D0%BD%D1%8B%D0%B5%20%D1%83%D0%BA%D1%80%D0%B0%D1%88%D0%B5%D0%BD%D0%B8%D1%8F&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%AE%D0%B2%D0%B5%D0%BB%D0%B8%D1%80%D0%BD%D1%8B%D0%B5%20%D1%83%D0%BA%D1%80%D0%B0%D1%88%D0%B5%D0%BD%D0%B8%D1%8F&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "music_video",
+      "title": "Музыка и видео",
+      "url": "https://www.ozon.ru/search/?text=%D0%9C%D1%83%D0%B7%D1%8B%D0%BA%D0%B0%20%D0%B2%D0%B8%D0%B4%D0%B5%D0%BE&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%9C%D1%83%D0%B7%D1%8B%D0%BA%D0%B0%20%D0%B2%D0%B8%D0%B4%D0%B5%D0%BE&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "office",
+      "title": "Канцелярские товары",
+      "url": "https://www.ozon.ru/search/?text=%D0%9A%D0%B0%D0%BD%D1%86%D0%B5%D0%BB%D1%8F%D1%80%D1%81%D0%BA%D0%B8%D0%B5%20%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%9A%D0%B0%D0%BD%D1%86%D0%B5%D0%BB%D1%8F%D1%80%D1%81%D0%BA%D0%B8%D0%B5%20%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "adult",
+      "title": "Товары для взрослых",
+      "url": "https://www.ozon.ru/search/?text=%D0%A2%D0%BE%D0%B2%D0%B0%D1%80%D1%8B%20%D0%B4%D0%BB%D1%8F%20%D0%B2%D0%B7%D1%80%D0%BE%D1%81%D0%BB%D1%8B%D1%85&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%A2%D0%BE%D0%B2%D0%B0%D1%80%D1%8B%20%D0%B4%D0%BB%D1%8F%20%D0%B2%D0%B7%D1%80%D0%BE%D1%81%D0%BB%D1%8B%D1%85&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "antiques",
+      "title": "Антиквариат и коллекционирование",
+      "url": "https://www.ozon.ru/search/?text=%D0%90%D0%BD%D1%82%D0%B8%D0%BA%D0%B2%D0%B0%D1%80%D0%B8%D0%B0%D1%82&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%90%D0%BD%D1%82%D0%B8%D0%BA%D0%B2%D0%B0%D1%80%D0%B8%D0%B0%D1%82&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "digital",
+      "title": "Цифровые товары",
+      "url": "https://www.ozon.ru/search/?text=%D0%A6%D0%B8%D1%84%D1%80%D0%BE%D0%B2%D1%8B%D0%B5%20%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%A6%D0%B8%D1%84%D1%80%D0%BE%D0%B2%D1%8B%D0%B5%20%D1%82%D0%BE%D0%B2%D0%B0%D1%80%D1%8B&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "chemistry",
+      "title": "Бытовая химия и гигиена",
+      "url": "https://www.ozon.ru/search/?text=%D0%91%D1%8B%D1%82%D0%BE%D0%B2%D0%B0%D1%8F%20%D1%85%D0%B8%D0%BC%D0%B8%D1%8F&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%91%D1%8B%D1%82%D0%BE%D0%B2%D0%B0%D1%8F%20%D1%85%D0%B8%D0%BC%D0%B8%D1%8F&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "games",
+      "title": "Игры и консоли",
+      "url": "https://www.ozon.ru/search/?text=%D0%98%D0%B3%D1%80%D1%8B%20%D0%B8%20%D0%BA%D0%BE%D0%BD%D1%81%D0%BE%D0%BB%D0%B8&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%98%D0%B3%D1%80%D1%8B%20%D0%B8%20%D0%BA%D0%BE%D0%BD%D1%81%D0%BE%D0%BB%D0%B8&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "smoking",
+      "title": "Товары для курения и аксессуары",
+      "url": "https://www.ozon.ru/search/?text=%D0%A2%D0%BE%D0%B2%D0%B0%D1%80%D1%8B%20%D0%B4%D0%BB%D1%8F%20%D0%BA%D1%83%D1%80%D0%B5%D0%BD%D0%B8%D1%8F&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%A2%D0%BE%D0%B2%D0%B0%D1%80%D1%8B%20%D0%B4%D0%BB%D1%8F%20%D0%BA%D1%83%D1%80%D0%B5%D0%BD%D0%B8%D1%8F&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "cars",
+      "title": "Автомобили",
+      "url": "https://www.ozon.ru/search/?text=%D0%90%D0%B2%D1%82%D0%BE%D0%BC%D0%BE%D0%B1%D0%B8%D0%BB%D0%B8&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%90%D0%B2%D1%82%D0%BE%D0%BC%D0%BE%D0%B1%D0%B8%D0%BB%D0%B8&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "travel_tickets",
+      "title": "Билеты, отели, туры",
+      "url": "https://www.ozon.ru/search/?text=%D0%91%D0%B8%D0%BB%D0%B5%D1%82%D1%8B%20%D0%BE%D1%82%D0%B5%D0%BB%D0%B8%20%D1%82%D1%83%D1%80%D1%8B&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%91%D0%B8%D0%BB%D0%B5%D1%82%D1%8B%20%D0%BE%D1%82%D0%B5%D0%BB%D0%B8%20%D1%82%D1%83%D1%80%D1%8B&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    },
+    {
+      "id": "gift_certificates",
+      "title": "Подарочные сертификаты OZON",
+      "url": "https://www.ozon.ru/search/?text=%D0%9F%D0%BE%D0%B4%D0%B0%D1%80%D0%BE%D1%87%D0%BD%D1%8B%D0%B5%20%D1%81%D0%B5%D1%80%D1%82%D0%B8%D1%84%D0%B8%D0%BA%D0%B0%D1%82%D1%8B%20OZON&sorting=rating",
+      "status": "pending",
+      "nextPagePath": "/search/?text=%D0%9F%D0%BE%D0%B4%D0%B0%D1%80%D0%BE%D1%87%D0%BD%D1%8B%D0%B5%20%D1%81%D0%B5%D1%80%D1%82%D0%B8%D1%84%D0%B8%D0%BA%D0%B0%D1%82%D1%8B%20OZON&sorting=rating",
+      "lastPageToken": null,
+      "pagesVisited": 0,
+      "updatedAt": "2026-06-07T12:35:05.354Z"
+    }
+  ],
+  "pendingProducts": [],
+  "pendingSellers": [
+    {
+      "sellerUrl": "https://www.ozon.ru/seller/worldofsport/",
+      "sellerKey": "worldofsport",
+      "sellerName": null,
+      "sourceUrl": "seed",
+      "discoveredAt": "2026-06-07T12:36:25.345Z"
+    }
+  ],
+  "seenProductUrls": [],
+  "seenSellerKeys": [
+    "worldofsport"
+  ],
+  "blockReason": "ozon_seller_http_403:https://ozon.com/seller/worldofsport/",
+  "blockedUntil": "2026-06-07T12:36:57.980Z",
+  "stats": {
+    "categoryPagesVisited": 0,
+    "categoryPagesFailed": 1,
+    "productsDiscovered": 0,
+    "productsProcessed": 0,
+    "productsFailed": 0,
+    "sellersDiscovered": 1,
+    "sellersProcessed": 0,
+    "sellersWithLegalDetails": 0,
+    "sellersWithoutLegalDetails": 0,
+    "sellersFailed": 0,
+    "blocksDetected": 2
+  }
+}

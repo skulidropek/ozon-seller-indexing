@@ -1,0 +1,28 @@
+{
+  "runId": "20260607123625-88a59466",
+  "startedAt": "2026-06-07T12:36:25.345Z",
+  "finishedAt": "2026-06-07T12:36:28.183Z",
+  "durationMs": 2838,
+  "shouldContinue": true,
+  "stopReason": "ozon_blocked",
+  "blockReason": "ozon_seller_http_403:https://ozon.com/seller/worldofsport/",
+  "blockedUntil": "2026-06-07T12:36:57.980Z",
+  "stats": {
+    "categoryPagesVisited": 0,
+    "categoryPagesFailed": 1,
+    "productsDiscovered": 0,
+    "productsProcessed": 0,
+    "productsFailed": 0,
+    "sellersDiscovered": 1,
+    "sellersProcessed": 0,
+    "sellersWithLegalDetails": 0,
+    "sellersWithoutLegalDetails": 0,
+    "sellersFailed": 0,
+    "blocksDetected": 2
+  },
+  "queue": {
+    "pendingProducts": 0,
+    "pendingSellers": 1,
+    "unfinishedCategories": 30
+  }
+}
