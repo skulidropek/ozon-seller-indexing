@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-06-07T12:35:05.354Z",
-  "updatedAt": "2026-06-07T14:09:04.359Z",
+  "updatedAt": "2026-06-07T14:13:24.857Z",
   "categories": [
     {
       "id": "electronics",
@@ -305,35 +305,25 @@
     }
   ],
   "pendingProducts": [],
-  "pendingSellers": [
-    {
-      "sellerUrl": "https://www.ozon.ru/seller/worldofsport/",
-      "sellerKey": "worldofsport",
-      "sellerName": null,
-      "sourceUrl": "seed",
-      "discoveredAt": "2026-06-07T12:36:25.345Z"
-    }
-  ],
+  "pendingSellers": [],
   "seenProductUrls": [],
-  "seenSellerKeys": [
-    "worldofsport"
-  ],
+  "seenSellerKeys": [],
   "blockReason": "ozon_http_403:/seller/",
-  "blockedUntil": "2026-06-07T14:12:04.202Z",
+  "blockedUntil": "2026-06-07T14:16:24.734Z",
   "stats": {
     "categoryPagesVisited": 0,
     "categoryPagesFailed": 3,
     "productsDiscovered": 0,
     "productsProcessed": 0,
     "productsFailed": 0,
-    "sellersDiscovered": 1,
+    "sellersDiscovered": 0,
     "sellersProcessed": 0,
     "sellersWithLegalDetails": 0,
     "sellersWithoutLegalDetails": 0,
     "sellersFailed": 0,
-    "blocksDetected": 5,
+    "blocksDetected": 6,
     "sellerFeedPagesVisited": 0,
-    "sellerFeedPagesFailed": 1
+    "sellerFeedPagesFailed": 2
   },
   "blockSource": "request_context",
   "diagnosticsArtifacts": [
@@ -344,13 +334,15 @@
     "artifacts/diagnostics/20260607133103-seller-worldofsport.png",
     "artifacts/diagnostics/20260607133103-seller-worldofsport.json",
     "artifacts/diagnostics/20260607140904-request--seller.txt",
-    "artifacts/diagnostics/20260607140904-request--seller.json"
+    "artifacts/diagnostics/20260607140904-request--seller.json",
+    "artifacts/diagnostics/20260607141324-request--seller.txt",
+    "artifacts/diagnostics/20260607141324-request--seller.json"
   ],
   "sellerFeed": {
     "status": "pending",
     "nextPagePath": "/seller/",
     "lastPageToken": null,
     "pagesVisited": 0,
-    "updatedAt": "2026-06-07T14:09:04.202Z"
+    "updatedAt": "2026-06-07T14:13:24.734Z"
   }
 }
