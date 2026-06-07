@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-06-07T12:35:05.354Z",
-  "updatedAt": "2026-06-07T12:40:57.756Z",
+  "updatedAt": "2026-06-07T13:31:04.990Z",
   "categories": [
     {
       "id": "electronics",
@@ -11,7 +11,7 @@
       "nextPagePath": "/category/electronics-15500/?sorting=rating",
       "lastPageToken": null,
       "pagesVisited": 0,
-      "updatedAt": "2026-06-07T12:40:54.551Z"
+      "updatedAt": "2026-06-07T13:31:02.028Z"
     },
     {
       "id": "clothes",
@@ -318,11 +318,11 @@
   "seenSellerKeys": [
     "worldofsport"
   ],
-  "blockReason": "ozon_http_403:/category/electronics-15500/?sorting=rating",
-  "blockedUntil": "2026-06-07T12:43:54.551Z",
+  "blockReason": "ozon_rendered_http_403:/category/electronics-15500/?sorting=rating",
+  "blockedUntil": "2026-06-07T13:34:02.028Z",
   "stats": {
     "categoryPagesVisited": 0,
-    "categoryPagesFailed": 2,
+    "categoryPagesFailed": 3,
     "productsDiscovered": 0,
     "productsProcessed": 0,
     "productsFailed": 0,
@@ -331,6 +331,15 @@
     "sellersWithLegalDetails": 0,
     "sellersWithoutLegalDetails": 0,
     "sellersFailed": 0,
-    "blocksDetected": 3
-  }
+    "blocksDetected": 4
+  },
+  "blockSource": "browser_page",
+  "diagnosticsArtifacts": [
+    "artifacts/diagnostics/20260607133101-category-electronics.html",
+    "artifacts/diagnostics/20260607133101-category-electronics.png",
+    "artifacts/diagnostics/20260607133101-category-electronics.json",
+    "artifacts/diagnostics/20260607133103-seller-worldofsport.html",
+    "artifacts/diagnostics/20260607133103-seller-worldofsport.png",
+    "artifacts/diagnostics/20260607133103-seller-worldofsport.json"
+  ]
 }
