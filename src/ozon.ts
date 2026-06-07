@@ -1,13 +1,25 @@
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright"
 
 import { extractSellerAboutFieldsFromText } from "./sellerAbout.js"
-import type { IndexerConfig, JsonValue, SellerAboutFields } from "./types.js"
-import { nowIso, normalizeWhitespace, sellerKeyFromUrl, toErrorMessage, toOzonComUrl, toOzonRuUrl } from "./utils.js"
+import { writeBinaryArtifact, writeTextArtifact } from "./storage.js"
+import type { IndexerConfig, JsonValue, OzonBlockSource, SellerAboutFields } from "./types.js"
+import { nowIso, normalizeWhitespace, safeId, sellerKeyFromUrl, toErrorMessage, toOzonComUrl, toOzonRuUrl } from "./utils.js"
 
 export class OzonBlockError extends Error {
-  constructor(message: string) {
+  readonly blockSource: OzonBlockSource
+  readonly artifacts: ReadonlyArray<string>
+
+  constructor(
+    message: string,
+    input: {
+      readonly blockSource: OzonBlockSource
+      readonly artifacts?: ReadonlyArray<string>
+    }
+  ) {
     super(message)
     this.name = "OzonBlockError"
+    this.blockSource = input.blockSource
+    this.artifacts = input.artifacts ?? []
   }
 }
 
@@ -147,13 +159,84 @@ const blockTextPatterns = [
   /access denied/i
 ]
 
-const assertNotBlockedText = (text: string, source: string): void => {
+const detectBlockReason = (text: string, source: string): string | null => {
   if (text.includes("__rr=") && text.includes("location")) {
-    throw new OzonBlockError(`ozon_redirect_loop:${source}`)
+    return `ozon_redirect_loop:${source}`
   }
   if (blockTextPatterns.some((pattern) => pattern.test(text))) {
-    throw new OzonBlockError(`ozon_antibot_screen:${source}`)
+    return `ozon_antibot_screen:${source}`
   }
+  return null
+}
+
+const assertNotBlockedText = (text: string, source: string, blockSource: OzonBlockSource): void => {
+  const reason = detectBlockReason(text, source)
+  if (reason !== null) {
+    throw new OzonBlockError(reason, { blockSource })
+  }
+}
+
+const captureDiagnosticScreenshot = async (
+  page: Page
+): Promise<{
+  readonly bytes: Uint8Array | null
+  readonly mode: "fullPage" | "viewport" | null
+  readonly error: string | null
+}> => {
+  const fullPage = await page.screenshot({ fullPage: true }).then(
+    (bytes) => ({ bytes, mode: "fullPage" as const, error: null }),
+    (error: unknown) => ({ bytes: null, mode: null, error: `fullPage:${toErrorMessage(error)}` })
+  )
+  if (fullPage.bytes !== null) {
+    return fullPage
+  }
+  return page.screenshot({ fullPage: false }).then(
+    (bytes) => ({ bytes, mode: "viewport" as const, error: fullPage.error }),
+    (error: unknown) => ({
+      bytes: null,
+      mode: null,
+      error: `${fullPage.error};viewport:${toErrorMessage(error)}`
+    })
+  )
+}
+
+export const savePageDiagnostics = async (input: {
+  readonly config: IndexerConfig
+  readonly page: Page
+  readonly label: string
+  readonly reason: string
+  readonly source: OzonBlockSource
+}): Promise<ReadonlyArray<string>> => {
+  const capturedAt = nowIso()
+  const baseName = `${capturedAt.replaceAll(/[^0-9]/g, "").slice(0, 14)}-${safeId(input.label).slice(0, 80)}`
+  const html = await input.page.content().catch((error: unknown) => `page_content_failed:${toErrorMessage(error)}`)
+  const text = await input.page.locator("body").textContent({ timeout: 2_000 }).catch(() => null)
+  const title = await input.page.title().catch(() => null)
+  const screenshot = await captureDiagnosticScreenshot(input.page)
+  const paths = [await writeTextArtifact(input.config, `diagnostics/${baseName}.html`, html)]
+  const screenshotPath =
+    screenshot.bytes === null
+      ? null
+      : await writeBinaryArtifact(input.config, `diagnostics/${baseName}.png`, screenshot.bytes)
+  if (screenshotPath !== null) {
+    paths.push(screenshotPath)
+  }
+  const metadata = {
+    capturedAt,
+    label: input.label,
+    reason: input.reason,
+    source: input.source,
+    currentUrl: input.page.url(),
+    title,
+    screenshot: {
+      mode: screenshot.mode,
+      path: screenshotPath,
+      error: screenshot.error
+    },
+    text
+  }
+  paths.push(await writeTextArtifact(input.config, `diagnostics/${baseName}.json`, JSON.stringify(metadata, null, 2)))
+  return paths
 }
 
 export const openBrowser = async (config: IndexerConfig): Promise<Browser> =>
@@ -192,9 +275,9 @@ export const fetchEntrypointJson = async (input: {
   const status = response.status()
   const text = await response.text()
   if (status === 403 || status === 429 || status === 451) {
-    throw new OzonBlockError(`ozon_http_${status}:${input.pagePath}`)
+    throw new OzonBlockError(`ozon_http_${status}:${input.pagePath}`, { blockSource: "request_context" })
   }
-  assertNotBlockedText(text, input.pagePath)
+  assertNotBlockedText(text, input.pagePath, "request_context")
   if (status < 200 || status >= 300) {
     throw new Error(`ozon_http_${status}:${input.pagePath}`)
   }
@@ -202,6 +285,52 @@ export const fetchEntrypointJson = async (input: {
     return JSON.parse(text) as JsonValue
   } catch (error) {
     throw new Error(`ozon_json_parse_failed:${input.pagePath}:${toErrorMessage(error)}`)
+  }
+}
+
+export const fetchRenderedPageSnapshot = async (input: {
+  readonly page: Page
+  readonly config: IndexerConfig
+  readonly pagePath: string
+  readonly label: string
+}): Promise<JsonValue> => {
+  const pageUrl = new URL(input.pagePath, "https://www.ozon.ru").toString()
+  const response = await input.page.goto(pageUrl, {
+    waitUntil: "domcontentloaded",
+    timeout: input.config.navigationTimeoutMs
+  }).catch((error: unknown) => {
+    throw new Error(`rendered_page_navigation_failed:${pageUrl}:${toErrorMessage(error)}`)
+  })
+  await input.page.waitForTimeout(2_000)
+  const status = response?.status() ?? null
+  const text = await input.page.locator("body").textContent({ timeout: 5_000 }).catch(() => "")
+  const html = await input.page.content().catch(() => "")
+  const reason = status !== null && [403, 429, 451].includes(status)
+    ? `ozon_rendered_http_${status}:${input.pagePath}`
+    : detectBlockReason(`${text}\n${html}`, input.pagePath)
+  if (reason !== null) {
+    const artifacts = await savePageDiagnostics({
+      config: input.config,
+      page: input.page,
+      label: input.label,
+      reason,
+      source: "browser_page"
+    })
+    throw new OzonBlockError(reason, {
+      blockSource: "browser_page",
+      artifacts
+    })
+  }
+
+  return {
+    source: "browser_page",
+    pagePath: input.pagePath,
+    url: pageUrl,
+    currentUrl: input.page.url(),
+    status,
+    text,
+    html,
+    capturedAt: nowIso()
   }
 }
 
@@ -256,6 +385,7 @@ const tryDirectSellerModal = async (input: {
   readonly page: Page
   readonly sellerUrl: string
   readonly timeoutMs: number
+  readonly config: IndexerConfig
 }): Promise<{ readonly fields: SellerAboutFields; readonly rawJson: string } | null> => {
   const sellerId = extractSellerIdFromUrl(input.sellerUrl)
   if (sellerId === null) {
@@ -267,12 +397,36 @@ const tryDirectSellerModal = async (input: {
     timeout: input.timeoutMs
   }).catch(() => null)
   if (response !== null && [403, 429, 451].includes(response.status())) {
-    throw new OzonBlockError(`ozon_modal_http_${response.status()}:${input.sellerUrl}`)
+    const reason = `ozon_modal_http_${response.status()}:${input.sellerUrl}`
+    const artifacts = await savePageDiagnostics({
+      config: input.config,
+      page: input.page,
+      label: `modal-${sellerKeyFromUrl(input.sellerUrl)}`,
+      reason,
+      source: "modal_page"
+    })
+    throw new OzonBlockError(reason, {
+      blockSource: "modal_page",
+      artifacts
+    })
   }
   await input.page.waitForTimeout(1_000)
   const text = await input.page.locator("body").textContent({ timeout: 5_000 }).catch(() => "")
   const html = await input.page.locator("body").evaluate((element) => element.outerHTML).catch(() => "")
-  assertNotBlockedText(`${text}\n${html}`, input.sellerUrl)
+  const blockReason = detectBlockReason(`${text}\n${html}`, input.sellerUrl)
+  if (blockReason !== null) {
+    const artifacts = await savePageDiagnostics({
+      config: input.config,
+      page: input.page,
+      label: `modal-${sellerKeyFromUrl(input.sellerUrl)}`,
+      reason: blockReason,
+      source: "modal_page"
+    })
+    throw new OzonBlockError(blockReason, {
+      blockSource: "modal_page",
+      artifacts
+    })
+  }
   const rawJson = JSON.stringify({
     source: "direct_modal",
     sellerUrl: input.sellerUrl,
@@ -305,11 +459,35 @@ export const extractSellerAboutWithPage = async (input: {
     throw new Error(`seller_navigation_failed:${sellerUrl}:${toErrorMessage(error)}`)
   })
   if (response !== null && [403, 429, 451].includes(response.status())) {
-    throw new OzonBlockError(`ozon_seller_http_${response.status()}:${sellerUrl}`)
+    const reason = `ozon_seller_http_${response.status()}:${sellerUrl}`
+    const artifacts = await savePageDiagnostics({
+      config: input.config,
+      page: input.page,
+      label: `seller-${sellerKeyFromUrl(sellerUrl)}`,
+      reason,
+      source: "seller_page"
+    })
+    throw new OzonBlockError(reason, {
+      blockSource: "seller_page",
+      artifacts
+    })
   }
   await input.page.waitForTimeout(1_500)
   const bodyText = await input.page.locator("body").textContent({ timeout: 5_000 }).catch(() => "")
-  assertNotBlockedText(bodyText ?? "", sellerUrl)
+  const blockReason = detectBlockReason(bodyText ?? "", sellerUrl)
+  if (blockReason !== null) {
+    const artifacts = await savePageDiagnostics({
+      config: input.config,
+      page: input.page,
+      label: `seller-${sellerKeyFromUrl(sellerUrl)}`,
+      reason: blockReason,
+      source: "seller_page"
+    })
+    throw new OzonBlockError(blockReason, {
+      blockSource: "seller_page",
+      artifacts
+    })
+  }
 
   const clicked = await clickSellerShopPill(input.page)
   if (clicked) {
@@ -338,7 +516,8 @@ export const extractSellerAboutWithPage = async (input: {
   const directModal = await tryDirectSellerModal({
     page: input.page,
     sellerUrl,
-    timeoutMs: input.config.navigationTimeoutMs
+    timeoutMs: input.config.navigationTimeoutMs,
+    config: input.config
   })
   if (directModal !== null) {
     return directModal.fields

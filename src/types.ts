@@ -8,6 +8,8 @@ export type JsonValue =
 
 export type LegalIdentifierType = "inn" | "ogrn" | "ogrnip" | "unknown"
 
+export type OzonBlockSource = "request_context" | "browser_page" | "seller_page" | "modal_page" | "unknown"
+
 export type SellerAboutFields = {
   readonly sellerLegalName: string | null
   readonly sellerLegalPersonName: string | null
@@ -70,7 +72,9 @@ export type IndexerState = {
   seenProductUrls: Array<string>
   seenSellerKeys: Array<string>
   blockReason: string | null
+  blockSource: OzonBlockSource | null
   blockedUntil: string | null
+  diagnosticsArtifacts: Array<string>
   stats: IndexerStats
 }
 
@@ -106,7 +110,10 @@ export type RunReport = {
   readonly shouldContinue: boolean
   readonly stopReason: string
   readonly blockReason: string | null
+  readonly blockSource: OzonBlockSource | null
   readonly blockedUntil: string | null
+  readonly browserMode: "headless" | "headed-xvfb"
+  readonly diagnosticsArtifacts: ReadonlyArray<string>
   readonly stats: IndexerStats
   readonly queue: {
     readonly pendingProducts: number
@@ -117,6 +124,7 @@ export type RunReport = {
 
 export type IndexerConfig = {
   readonly dataDirectory: string
+  readonly artifactsDirectory: string
   readonly stateFile: string
   readonly reportsDirectory: string
   readonly durationMinutes: number

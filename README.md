@@ -14,6 +14,7 @@ The repository is intentionally standalone: no proxy, no GoLogin, no BrowserHost
 - Saves resumable queues and category cursors in `state/indexer-state.json`.
 - Detects Ozon blocking patterns and stops cleanly after committing already collected data.
 - Seeds `https://ozon.com/seller/worldofsport/` by default so the seller modal flow is tested directly.
+- Runs headed Chromium under Xvfb in GitHub Actions and stores screenshots/HTML when Ozon blocks the runner.
 
 ## Data layout
 
@@ -27,6 +28,8 @@ state/
 reports/
   latest-run.json
   runs/<run-id>.json
+artifacts/
+  diagnostics/<timestamp>-<label>.{html,png,json}
 ```
 
 ## Local usage
@@ -59,5 +62,6 @@ See `env.example`. The most important controls are:
 - `MAX_ACTION_DELAY_MS`
 - `BLOCK_COOLDOWN_MS`
 - `SEED_SELLER_URLS`
+- `ARTIFACTS_DIRECTORY`
 
 Keep delays conservative. Ozon may return redirect loops, 403 responses, or anti-bot screens from GitHub-hosted runners.

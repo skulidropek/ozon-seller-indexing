@@ -6,4 +6,5 @@ coverage/
 *.log
 playwright-report/
 test-results/
+artifacts/
 .DS_Store

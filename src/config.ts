@@ -96,6 +96,7 @@ export const loadConfig = (argv: ReadonlyArray<string>): IndexerConfig => {
 
   return {
     dataDirectory: process.env.DATA_DIRECTORY ?? "data",
+    artifactsDirectory: process.env.ARTIFACTS_DIRECTORY ?? "artifacts",
     stateFile: process.env.STATE_FILE ?? "state/indexer-state.json",
     reportsDirectory: process.env.REPORTS_DIRECTORY ?? "reports",
     durationMinutes,

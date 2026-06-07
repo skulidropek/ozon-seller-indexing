@@ -19,6 +19,7 @@ import {
   extractSellerAboutWithPage,
   extractSellerCandidates,
   fetchEntrypointJson,
+  fetchRenderedPageSnapshot,
   openBrowser,
   openContext,
   OzonBlockError
@@ -64,17 +65,29 @@ const log = (event: string, payload: Record<string, unknown> = {}): void => {
   console.log(JSON.stringify({ ts: nowIso(), event, ...payload }))
 }
 
-const setBlocked = async (ctx: WorkerContext, reason: string): Promise<void> => {
+const setBlocked = async (ctx: WorkerContext, block: OzonBlockError | string): Promise<void> => {
+  const reason = block instanceof OzonBlockError ? block.message : block
+  const blockSource = block instanceof OzonBlockError ? block.blockSource : "unknown"
+  const artifacts = block instanceof OzonBlockError ? block.artifacts : []
+  const previousArtifactCount = ctx.state.diagnosticsArtifacts.length
+  for (const artifact of artifacts) {
+    uniquePush(ctx.state.diagnosticsArtifacts, artifact, (value) => value)
+  }
   if (ctx.blocked) {
+    if (ctx.state.diagnosticsArtifacts.length > previousArtifactCount) {
+      log("ozon_blocked_diagnostics_added", { reason, blockSource, artifacts })
+      await saveState(ctx.config, ctx.state)
+    }
     return
   }
   ctx.blocked = true
   ctx.stopReason = "ozon_blocked"
   const blockedUntil = new Date(Date.now() + ctx.config.blockCooldownMs).toISOString()
   ctx.state.blockReason = reason
+  ctx.state.blockSource = blockSource
   ctx.state.blockedUntil = blockedUntil
   ctx.state.stats.blocksDetected += 1
-  log("ozon_blocked", { reason, blockedUntil })
+  log("ozon_blocked", { reason, blockSource, blockedUntil, artifacts })
   await saveState(ctx.config, ctx.state)
 }
 
@@ -89,6 +102,7 @@ const waitForExistingCooldown = async (
   const blockedUntilMs = Date.parse(state.blockedUntil)
   if (!Number.isFinite(blockedUntilMs) || blockedUntilMs <= Date.now()) {
     state.blockReason = null
+    state.blockSource = null
     state.blockedUntil = null
     await saveState(config, state)
     return false
@@ -102,11 +116,48 @@ const waitForExistingCooldown = async (
   await new Promise((resolve) => setTimeout(resolve, waitMs))
   if (Date.now() >= blockedUntilMs) {
     state.blockReason = null
+    state.blockSource = null
     state.blockedUntil = null
     await saveState(config, state)
     return false
   }
   return true
+}
+
+const fetchCategoryJsonWithFallback = async (input: {
+  readonly ctx: WorkerContext
+  readonly category: CategoryState
+  readonly pageToken: string
+  readonly workerId: number
+}): Promise<JsonValue> => {
+  try {
+    return await fetchEntrypointJson({
+      context: input.ctx.browserContext,
+      pagePath: input.pageToken,
+      timeoutMs: input.ctx.config.navigationTimeoutMs
+    })
+  } catch (error) {
+    if (!(error instanceof OzonBlockError)) {
+      throw error
+    }
+    log("category_request_blocked_trying_browser_page", {
+      workerId: input.workerId,
+      categoryId: input.category.id,
+      pageToken: input.pageToken,
+      reason: error.message
+    })
+    const page = await input.ctx.browserContext.newPage()
+    try {
+      return await fetchRenderedPageSnapshot({
+        page,
+        config: input.ctx.config,
+        pagePath: input.pageToken,
+        label: `category-${input.category.id}`
+      })
+    } finally {
+      await page.close().catch(() => undefined)
+    }
+  }
 }
 
 const canContinue = (ctx: WorkerContext): boolean =>
@@ -196,10 +247,11 @@ const categoryWorker = async (ctx: WorkerContext, workerId: number): Promise<voi
     try {
       await ctx.delayGate.wait(`category:${category.id}`)
       log("category_page_started", { workerId, categoryId: category.id, pageToken })
-      const json = await fetchEntrypointJson({
-        context: ctx.browserContext,
-        pagePath: pageToken,
-        timeoutMs: ctx.config.navigationTimeoutMs
+      const json = await fetchCategoryJsonWithFallback({
+        ctx,
+        category,
+        pageToken,
+        workerId
       })
       const productUrls = extractProductUrls(json)
       const sellerCandidates = extractSellerCandidates(json)
@@ -255,7 +307,7 @@ const categoryWorker = async (ctx: WorkerContext, workerId: number): Promise<voi
       category.updatedAt = nowIso()
       ctx.state.stats.categoryPagesFailed += 1
       if (error instanceof OzonBlockError) {
-        await setBlocked(ctx, error.message)
+        await setBlocked(ctx, error)
         return
       }
       log("category_page_failed", { workerId, categoryId: category.id, reason: toErrorMessage(error) })
@@ -318,7 +370,7 @@ const processProduct = async (ctx: WorkerContext, workerId: number, item: Produc
   } catch (error) {
     if (error instanceof OzonBlockError) {
       ctx.state.pendingProducts.unshift(item)
-      await setBlocked(ctx, error.message)
+      await setBlocked(ctx, error)
       return
     }
     ctx.state.stats.productsFailed += 1
@@ -416,7 +468,7 @@ const processSeller = async (
   } catch (error) {
     if (error instanceof OzonBlockError) {
       ctx.state.pendingSellers.unshift(item)
-      await setBlocked(ctx, error.message)
+      await setBlocked(ctx, error)
       return
     }
     const now = nowIso()
@@ -485,7 +537,10 @@ const buildReport = (input: {
     shouldContinue: hasUnfinishedWork(input.state),
     stopReason: input.stopReason,
     blockReason: input.state.blockReason,
+    blockSource: input.state.blockSource,
     blockedUntil: input.state.blockedUntil,
+    browserMode: input.config.headless ? "headless" : "headed-xvfb",
+    diagnosticsArtifacts: input.state.diagnosticsArtifacts,
     stats: input.state.stats,
     queue: {
       pendingProducts: input.state.pendingProducts.length,
@@ -534,6 +589,8 @@ export const runTimedIndexer = async (config: IndexerConfig): Promise<RunReport>
     }
     log("indexer_started", {
       durationMinutes: config.durationMinutes,
+      browserMode: config.headless ? "headless" : "headed-xvfb",
+      artifactsDirectory: config.artifactsDirectory,
       categoryWorkers: config.maxCategoryWorkers,
       productWorkers: config.maxProductWorkers,
       sellerWorkers: config.maxSellerWorkers

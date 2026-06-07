@@ -30,6 +30,9 @@ permissions:
   contents: write
   actions: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 concurrency:
   group: ozon-seller-indexer
   cancel-in-progress: false
@@ -54,6 +57,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
@@ -63,7 +71,7 @@ jobs:
           git config --global user.email "indexer@github-actions.local"
 
       - name: Ensure output directories
-        run: mkdir -p data state reports/runs
+        run: mkdir -p data state reports/runs artifacts/diagnostics
 
       - name: Build
         run: npm run build
@@ -71,6 +79,7 @@ jobs:
       - name: Run indexer
         env:
           DATA_DIRECTORY: data
+          ARTIFACTS_DIRECTORY: artifacts
           STATE_FILE: state/indexer-state.json
           REPORTS_DIRECTORY: reports
           MAX_CATEGORY_WORKERS: "1"
@@ -82,10 +91,11 @@ jobs:
           MIN_ACTION_DELAY_MS: "2000"
           MAX_ACTION_DELAY_MS: "6000"
           BLOCK_COOLDOWN_MS: "180000"
-          HEADLESS: "true"
+          HEADLESS: "false"
         run: |
           DURATION="${{ github.event.inputs.duration_minutes || '9' }}"
-          timeout $((DURATION * 60 + 30)) node dist/index.js timed --duration-minutes "$DURATION" \
+          xvfb-run --auto-servernum --server-args="-screen 0 1365x900x24" \
+            timeout $((DURATION * 60 + 30)) node dist/index.js timed --duration-minutes "$DURATION" \
             || echo "Indexer stopped by timeout or graceful block; committing saved progress if present."
 
       - name: Stage changes
@@ -146,4 +156,13 @@ jobs:
           echo "- Seller files: $(find data/sellers -name '*.json' 2>/dev/null | wc -l || echo 0)"
           echo "- Product files: $(find data/products -name '*.json' 2>/dev/null | wc -l || echo 0)"
           echo "- Category page files: $(find data/category-pages -name '*.json' 2>/dev/null | wc -l || echo 0)"
+          echo "- Diagnostic artifacts: $(find artifacts -type f 2>/dev/null | wc -l || echo 0)"
           [ -f reports/latest-run.json ] && cat reports/latest-run.json
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ozon-diagnostics-${{ github.run_id }}
+          path: artifacts/**
+          if-no-files-found: ignore

@@ -52,7 +52,9 @@ const createInitialState = (categories: ReadonlyArray<CategorySeed>): IndexerSta
     seenProductUrls: [],
     seenSellerKeys: [],
     blockReason: null,
+    blockSource: null,
     blockedUntil: null,
+    diagnosticsArtifacts: [],
     stats: emptyStats()
   }
 }
@@ -86,6 +88,8 @@ export const writeJsonFile = async (filePath: string, value: unknown): Promise<v
 export const loadState = async (config: IndexerConfig): Promise<IndexerState> => {
   const existing = await readJsonFile<IndexerState>(config.stateFile)
   const state = existing ?? createInitialState(config.categories)
+  state.blockSource ??= null
+  state.diagnosticsArtifacts ??= []
   const categoryIds = new Set(state.categories.map((category) => category.id))
   const createdAt = state.createdAt
   for (const category of config.categories) {
@@ -121,6 +125,7 @@ export const saveState = async (config: IndexerConfig, state: IndexerState): Pro
 export const ensureOutputDirectories = async (config: IndexerConfig): Promise<void> => {
   await Promise.all([
     fs.mkdir(config.dataDirectory, { recursive: true }),
+    fs.mkdir(path.join(config.artifactsDirectory, "diagnostics"), { recursive: true }),
     fs.mkdir(path.dirname(config.stateFile), { recursive: true }),
     fs.mkdir(path.join(config.reportsDirectory, "runs"), { recursive: true })
   ])
@@ -164,6 +169,28 @@ export const writeReport = async (config: IndexerConfig, report: RunReport): Pro
     writeJsonFile(path.join(config.reportsDirectory, "latest-run.json"), report),
     writeJsonFile(path.join(config.reportsDirectory, "runs", `${report.runId}.json`), report)
   ])
+}
+
+export const writeTextArtifact = async (
+  config: IndexerConfig,
+  relativePath: string,
+  text: string
+): Promise<string> => {
+  const logicalPath = path.join(config.artifactsDirectory, relativePath)
+  await fs.mkdir(path.dirname(logicalPath), { recursive: true })
+  await fs.writeFile(logicalPath, text, "utf8")
+  return logicalPath
+}
+
+export const writeBinaryArtifact = async (
+  config: IndexerConfig,
+  relativePath: string,
+  bytes: Uint8Array
+): Promise<string> => {
+  const logicalPath = path.join(config.artifactsDirectory, relativePath)
+  await fs.mkdir(path.dirname(logicalPath), { recursive: true })
+  await fs.writeFile(logicalPath, bytes)
+  return logicalPath
 }
 
 export const createPendingSellerRecord = (input: {
