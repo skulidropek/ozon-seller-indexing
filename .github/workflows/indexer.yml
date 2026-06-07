@@ -82,8 +82,12 @@ jobs:
           ARTIFACTS_DIRECTORY: artifacts
           STATE_FILE: state/indexer-state.json
           REPORTS_DIRECTORY: reports
+          DISCOVERY_MODE: seller_feed
+          OZON_API_ORIGIN: https://ozon.com
+          OZON_SELLER_FEED_START_PATH: /seller/
+          OZON_COOKIE: ${{ secrets.OZON_COOKIE }}
           MAX_CATEGORY_WORKERS: "1"
-          MAX_PRODUCT_WORKERS: "2"
+          MAX_PRODUCT_WORKERS: "0"
           MAX_SELLER_WORKERS: "2"
           MAX_PAGES_PER_RUN: ${{ github.event.inputs.max_pages_per_run || '25' }}
           MAX_PRODUCTS_PER_RUN: ${{ github.event.inputs.max_products_per_run || '300' }}
@@ -137,6 +141,11 @@ jobs:
             exit 0
           fi
           SHOULD_CONTINUE=$(node -e "const r=require('./reports/latest-run.json'); console.log(r.shouldContinue ? 'true' : 'false')")
+          STOP_REASON=$(node -e "const r=require('./reports/latest-run.json'); console.log(r.stopReason || '')")
+          if [ "$STOP_REASON" = "ozon_blocked" ]; then
+            echo "Ozon block detected; skipping immediate redispatch"
+            exit 0
+          fi
           if [ "$SHOULD_CONTINUE" != "true" ]; then
             echo "No remaining work"
             exit 0

@@ -1,4 +1,4 @@
-import type { CategorySeed, IndexerConfig } from "./types.js"
+import type { CategorySeed, DiscoveryMode, IndexerConfig } from "./types.js"
 
 const categoryOrigin = "https://www.ozon.ru"
 
@@ -66,6 +66,25 @@ const readBool = (name: string, fallback: boolean): boolean => {
   return fallback
 }
 
+const readDiscoveryMode = (): DiscoveryMode => {
+  const raw = process.env.DISCOVERY_MODE?.trim().toLowerCase()
+  return raw === "category" ? "category" : "seller_feed"
+}
+
+const normalizeOrigin = (rawOrigin: string | undefined): string => {
+  const parsed = new URL(rawOrigin ?? "https://ozon.com")
+  parsed.pathname = ""
+  parsed.search = ""
+  parsed.hash = ""
+  return parsed.toString().replace(/\/$/g, "")
+}
+
+const normalizePagePath = (rawPath: string | undefined, fallback: string): string => {
+  const value = rawPath?.trim() || fallback
+  const parsed = new URL(value, "https://ozon.com")
+  return `${parsed.pathname}${parsed.search}`
+}
+
 const readArgValue = (argv: ReadonlyArray<string>, option: string): string | null => {
   const index = argv.indexOf(option)
   if (index < 0) {
@@ -93,6 +112,8 @@ export const loadConfig = (argv: ReadonlyArray<string>): IndexerConfig => {
 
   const minActionDelayMs = readInt("MIN_ACTION_DELAY_MS", 2_000, 0)
   const maxActionDelayMs = Math.max(minActionDelayMs, readInt("MAX_ACTION_DELAY_MS", 6_000, minActionDelayMs))
+  const discoveryMode = readDiscoveryMode()
+  const defaultSeedSellerUrls = discoveryMode === "seller_feed" ? [] : ["https://ozon.com/seller/worldofsport/"]
 
   return {
     dataDirectory: process.env.DATA_DIRECTORY ?? "data",
@@ -111,7 +132,11 @@ export const loadConfig = (argv: ReadonlyArray<string>): IndexerConfig => {
     blockCooldownMs: readInt("BLOCK_COOLDOWN_MS", 180_000, 1_000),
     navigationTimeoutMs: readInt("NAVIGATION_TIMEOUT_MS", 30_000, 5_000),
     headless: readBool("HEADLESS", true),
+    discoveryMode,
+    ozonApiOrigin: normalizeOrigin(process.env.OZON_API_ORIGIN),
+    ozonCookie: process.env.OZON_COOKIE?.trim() || null,
+    sellerFeedStartPath: normalizePagePath(process.env.OZON_SELLER_FEED_START_PATH, "/seller/"),
     categories: defaultCategories,
-    seedSellerUrls: readCsv("SEED_SELLER_URLS", ["https://ozon.com/seller/worldofsport/"])
+    seedSellerUrls: readCsv("SEED_SELLER_URLS", defaultSeedSellerUrls)
   }
 }

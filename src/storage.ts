@@ -17,6 +17,8 @@ import { nowIso, productKeyFromUrl, sellerKeyFromUrl, sha1, shardPath, toOzonRuU
 const emptyStats = (): IndexerStats => ({
   categoryPagesVisited: 0,
   categoryPagesFailed: 0,
+  sellerFeedPagesVisited: 0,
+  sellerFeedPagesFailed: 0,
   productsDiscovered: 0,
   productsProcessed: 0,
   productsFailed: 0,
@@ -40,12 +42,19 @@ const toInitialCategoryState = (category: CategorySeed, createdAt: string): Cate
   }
 }
 
-const createInitialState = (categories: ReadonlyArray<CategorySeed>): IndexerState => {
+const createInitialState = (categories: ReadonlyArray<CategorySeed>, sellerFeedStartPath: string): IndexerState => {
   const createdAt = nowIso()
   return {
     version: 1,
     createdAt,
     updatedAt: createdAt,
+    sellerFeed: {
+      status: "pending",
+      nextPagePath: sellerFeedStartPath,
+      lastPageToken: null,
+      pagesVisited: 0,
+      updatedAt: createdAt
+    },
     categories: categories.map((category) => toInitialCategoryState(category, createdAt)),
     pendingProducts: [],
     pendingSellers: [],
@@ -87,9 +96,18 @@ export const writeJsonFile = async (filePath: string, value: unknown): Promise<v
 
 export const loadState = async (config: IndexerConfig): Promise<IndexerState> => {
   const existing = await readJsonFile<IndexerState>(config.stateFile)
-  const state = existing ?? createInitialState(config.categories)
+  const state = existing ?? createInitialState(config.categories, config.sellerFeedStartPath)
+  state.sellerFeed ??= {
+    status: "pending",
+    nextPagePath: config.sellerFeedStartPath,
+    lastPageToken: null,
+    pagesVisited: 0,
+    updatedAt: state.createdAt
+  }
   state.blockSource ??= null
   state.diagnosticsArtifacts ??= []
+  state.stats.sellerFeedPagesVisited ??= 0
+  state.stats.sellerFeedPagesFailed ??= 0
   const categoryIds = new Set(state.categories.map((category) => category.id))
   const createdAt = state.createdAt
   for (const category of config.categories) {

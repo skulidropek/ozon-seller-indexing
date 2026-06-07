@@ -97,6 +97,60 @@ export type SellerCandidate = {
   readonly sellerName: string | null
 }
 
+export type SellerFeedPage = {
+  readonly sellers: ReadonlyArray<SellerCandidate>
+  readonly nextPagePath: string | null
+}
+
+const readRecord = (
+  record: { readonly [key: string]: JsonValue },
+  key: string
+): { readonly [key: string]: JsonValue } | null => {
+  const value = record[key]
+  return isRecord(value) ? value : null
+}
+
+const readActionLink = (value: JsonValue): string | null => {
+  if (!isRecord(value)) {
+    return null
+  }
+  const link = value.link
+  return typeof link === "string" && link.includes("/seller/") ? link : null
+}
+
+const readSellerFeedCardName = (record: { readonly [key: string]: JsonValue }): string | null => {
+  const header = readRecord(record, "header")
+  const title = header === null ? null : readRecord(header, "title")
+  const titleText = title === null ? null : title.text
+  return typeof titleText === "string" && normalizeWhitespace(titleText).length > 0
+    ? normalizeWhitespace(titleText)
+    : null
+}
+
+const readSellerFeedCardLink = (record: { readonly [key: string]: JsonValue }): string | null => {
+  const topLevelActionLink = readActionLink(record.action)
+  if (topLevelActionLink !== null) {
+    return topLevelActionLink
+  }
+  const header = readRecord(record, "header")
+  const badges = header?.badges
+  if (!Array.isArray(badges)) {
+    return null
+  }
+  for (const badge of badges) {
+    if (!isRecord(badge)) {
+      continue
+    }
+    const text = badge.text
+    const common = readRecord(badge, "common")
+    const actionLink = common === null ? null : readActionLink(common.action)
+    if (typeof text === "string" && normalizeWhitespace(text).toLowerCase() === "магазин" && actionLink !== null) {
+      return actionLink
+    }
+  }
+  return null
+}
+
 export const extractSellerCandidates = (json: JsonValue): ReadonlyArray<SellerCandidate> => {
   const candidates = new Map<string, SellerCandidate>()
   walkJson(json, (item) => {
@@ -128,6 +182,30 @@ export const extractSellerCandidates = (json: JsonValue): ReadonlyArray<SellerCa
   return [...candidates.values()].sort((left, right) => left.sellerKey.localeCompare(right.sellerKey))
 }
 
+export const extractSellerFeedPage = (json: JsonValue): SellerFeedPage => {
+  const sellers = new Map<string, SellerCandidate>()
+  walkJson(json, (item) => {
+    if (!isRecord(item) || !isRecord(item.header)) {
+      return
+    }
+    const sellerLink = readSellerFeedCardLink(item)
+    if (sellerLink === null) {
+      return
+    }
+    const sellerUrl = toOzonRuUrl(sellerLink)
+    const sellerKey = sellerKeyFromUrl(sellerUrl)
+    sellers.set(sellerKey, {
+      sellerUrl,
+      sellerKey,
+      sellerName: readSellerFeedCardName(item)
+    })
+  })
+  return {
+    sellers: [...sellers.values()].sort((left, right) => left.sellerKey.localeCompare(right.sellerKey)),
+    nextPagePath: extractNextPagePath(json)
+  }
+}
+
 export const extractProductUrls = (json: JsonValue): ReadonlyArray<string> => collectOzonUrls(json, "product")
 
 export const extractNextPagePath = (json: JsonValue): string | null => {
@@ -147,8 +225,58 @@ export const extractNextPagePath = (json: JsonValue): string | null => {
   return result
 }
 
-const buildEntrypointUrl = (pagePath: string): string =>
-  `https://www.ozon.ru/api/entrypoint-api.bx/page/json/v2?url=${encodeURIComponent(pagePath)}`
+const buildEntrypointUrl = (origin: string, pagePath: string): string =>
+  `${origin}/api/entrypoint-api.bx/page/json/v2?url=${encodeURIComponent(pagePath)}`
+
+export const redactCookieHeader = (cookie: string): string =>
+  cookie
+    .split(";")
+    .map((part) => {
+      const [rawName] = part.split("=")
+      const name = rawName.trim()
+      return name.length === 0 ? null : `${name}=<redacted>`
+    })
+    .filter((part): part is string => part !== null)
+    .join("; ")
+
+const entrypointHeaders = (input: {
+  readonly config: IndexerConfig
+  readonly referer: string
+  readonly pagePrevious: string
+}): Record<string, string> => {
+  const headers: Record<string, string> = {
+    accept: "application/json",
+    "accept-language": "ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
+    referer: input.referer,
+    "x-o3-app-name": "dweb_client",
+    "x-o3-app-version": "release_5-5-2026_df4078d8",
+    "x-page-previous": input.pagePrevious
+  }
+  if (input.config.ozonCookie !== null) {
+    headers.cookie = input.config.ozonCookie
+  }
+  return headers
+}
+
+const redactHeaderValue = (name: string, value: string): string => {
+  const lowerName = name.toLowerCase()
+  if (lowerName === "cookie" || lowerName === "set-cookie") {
+    return redactCookieHeader(value)
+  }
+  if (lowerName.includes("token") || lowerName === "authorization") {
+    return "<redacted>"
+  }
+  return value
+}
+
+const redactHeaders = (headers: Record<string, string>): Record<string, string> =>
+  Object.fromEntries(Object.entries(headers).map(([name, value]) => [name, redactHeaderValue(name, value)]))
+
+const sanitizeDiagnosticText = (text: string): string =>
+  text
+    .replaceAll(/((?:__Secure-[A-Za-z0-9_-]+|abt_data|access_token|refresh_token|access-token|refresh-token)=)[^;\s"']+/gi, "$1<redacted>")
+    .replaceAll(/("(?:userToken|pageToken|requestID|accessToken|refreshToken)"\s*:\s*")[^"]+(")/gi, "$1<redacted>$2")
+    .replaceAll(/(Bearer\s+)[A-Za-z0-9._-]+/gi, "$1<redacted>")
 
 const blockTextPatterns = [
   /мы заметили подозрительную активность/i,
@@ -169,11 +297,41 @@ const detectBlockReason = (text: string, source: string): string | null => {
   return null
 }
 
-const assertNotBlockedText = (text: string, source: string, blockSource: OzonBlockSource): void => {
-  const reason = detectBlockReason(text, source)
-  if (reason !== null) {
-    throw new OzonBlockError(reason, { blockSource })
+const saveRequestDiagnostics = async (input: {
+  readonly config: IndexerConfig
+  readonly label: string
+  readonly reason: string
+  readonly requestUrl: string
+  readonly pagePath: string
+  readonly status: number
+  readonly requestHeaders: Record<string, string>
+  readonly responseHeaders: Record<string, string>
+  readonly body: string
+}): Promise<ReadonlyArray<string>> => {
+  const capturedAt = nowIso()
+  const baseName = `${capturedAt.replaceAll(/[^0-9]/g, "").slice(0, 14)}-${safeId(input.label).slice(0, 80)}`
+  const bodyPreview = sanitizeDiagnosticText(input.body.slice(0, 20_000))
+  const bodyPreviewPath = await writeTextArtifact(input.config, `diagnostics/${baseName}.txt`, bodyPreview)
+  const metadata = {
+    capturedAt,
+    label: input.label,
+    reason: input.reason,
+    source: "request_context",
+    requestUrl: input.requestUrl,
+    pagePath: input.pagePath,
+    status: input.status,
+    requestHeaders: redactHeaders(input.requestHeaders),
+    responseHeaders: redactHeaders(input.responseHeaders),
+    bodyLength: input.body.length,
+    bodyPreviewPath,
+    bodyPreview: bodyPreview.slice(0, 2_000)
   }
+  const metadataPath = await writeTextArtifact(
+    input.config,
+    `diagnostics/${baseName}.json`,
+    JSON.stringify(metadata, null, 2)
+  )
+  return [bodyPreviewPath, metadataPath]
 }
 
 const captureDiagnosticScreenshot = async (
@@ -249,7 +407,7 @@ export const openContext = async (browser: Browser, config: IndexerConfig): Prom
     locale: "ru-RU",
     timezoneId: "Europe/Moscow",
     userAgent:
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
     viewport: {
       width: 1365,
       height: 900
@@ -260,24 +418,53 @@ export const openContext = async (browser: Browser, config: IndexerConfig): Prom
 
 export const fetchEntrypointJson = async (input: {
   readonly context: BrowserContext
+  readonly config: IndexerConfig
   readonly pagePath: string
+  readonly referer?: string
+  readonly pagePrevious?: string
   readonly timeoutMs: number
 }): Promise<JsonValue> => {
-  const requestUrl = buildEntrypointUrl(input.pagePath)
+  const requestUrl = buildEntrypointUrl(input.config.ozonApiOrigin, input.pagePath)
+  const requestHeaders = entrypointHeaders({
+    config: input.config,
+    referer: input.referer ?? `${input.config.ozonApiOrigin}/`,
+    pagePrevious: input.pagePrevious ?? "unknown"
+  })
   const response = await input.context.request.get(requestUrl, {
     maxRedirects: 3,
     timeout: input.timeoutMs,
-    headers: {
-      accept: "application/json",
-      referer: "https://www.ozon.ru/"
-    }
+    headers: requestHeaders
   })
   const status = response.status()
   const text = await response.text()
-  if (status === 403 || status === 429 || status === 451) {
-    throw new OzonBlockError(`ozon_http_${status}:${input.pagePath}`, { blockSource: "request_context" })
+  const redirectLocation = response.headers().location ?? ""
+  const throwWithRequestDiagnostics = async (reason: string): Promise<never> => {
+    const artifacts = await saveRequestDiagnostics({
+      config: input.config,
+      label: `request-${input.pagePath}`,
+      reason,
+      requestUrl,
+      pagePath: input.pagePath,
+      status,
+      requestHeaders,
+      responseHeaders: response.headers(),
+      body: text
+    })
+    throw new OzonBlockError(reason, {
+      blockSource: "request_context",
+      artifacts
+    })
   }
-  assertNotBlockedText(text, input.pagePath, "request_context")
+  if (status >= 300 && status < 400 && redirectLocation.includes("__rr=")) {
+    await throwWithRequestDiagnostics(`ozon_redirect_loop:${input.pagePath}`)
+  }
+  if (status === 403 || status === 429 || status === 451) {
+    await throwWithRequestDiagnostics(`ozon_http_${status}:${input.pagePath}`)
+  }
+  const textBlockReason = detectBlockReason(text, input.pagePath)
+  if (textBlockReason !== null) {
+    await throwWithRequestDiagnostics(textBlockReason)
+  }
   if (status < 200 || status >= 300) {
     throw new Error(`ozon_http_${status}:${input.pagePath}`)
   }

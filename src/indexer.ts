@@ -18,6 +18,7 @@ import {
   extractProductUrls,
   extractSellerAboutWithPage,
   extractSellerCandidates,
+  extractSellerFeedPage,
   fetchEntrypointJson,
   fetchRenderedPageSnapshot,
   openBrowser,
@@ -133,6 +134,7 @@ const fetchCategoryJsonWithFallback = async (input: {
   try {
     return await fetchEntrypointJson({
       context: input.ctx.browserContext,
+      config: input.ctx.config,
       pagePath: input.pageToken,
       timeoutMs: input.ctx.config.navigationTimeoutMs
     })
@@ -169,6 +171,12 @@ const pickCategory = (state: IndexerState): CategoryState | null => {
   )
   return category ?? null
 }
+
+const hasSellerFeedPage = (state: IndexerState): boolean =>
+  state.sellerFeed.status !== "done" && state.sellerFeed.status !== "blocked" && state.sellerFeed.nextPagePath !== null
+
+const hasDiscoveryPages = (config: IndexerConfig, state: IndexerState): boolean =>
+  config.discoveryMode === "seller_feed" ? hasSellerFeedPage(state) : pickCategory(state) !== null
 
 const normalizeNextPagePath = (rawPath: string | null, categoryUrl: string): string | null => {
   if (rawPath === null || rawPath.trim().length === 0) {
@@ -230,6 +238,80 @@ const addPendingSeller = async (
     )
   }
   return true
+}
+
+const sellerFeedWorker = async (ctx: WorkerContext, workerId: number): Promise<void> => {
+  while (canContinue(ctx) && ctx.runCounters.pagesProcessed < ctx.config.maxPagesPerRun) {
+    if (!hasSellerFeedPage(ctx.state)) {
+      return
+    }
+    const feed = ctx.state.sellerFeed
+    feed.status = "running"
+    const pageToken = feed.nextPagePath
+    if (pageToken === null) {
+      feed.status = "done"
+      continue
+    }
+    try {
+      await ctx.delayGate.wait(`seller-feed:${feed.pagesVisited}`)
+      log("seller_feed_page_started", { workerId, pageToken })
+      const json = await fetchEntrypointJson({
+        context: ctx.browserContext,
+        config: ctx.config,
+        pagePath: pageToken,
+        referer: `${ctx.config.ozonApiOrigin}/seller/`,
+        pagePrevious: "seller",
+        timeoutMs: ctx.config.navigationTimeoutMs
+      })
+      const feedPage = extractSellerFeedPage(json)
+      let newSellers = 0
+      for (const seller of feedPage.sellers) {
+        const added = await addPendingSeller(ctx.config, ctx.state, {
+          sellerUrl: seller.sellerUrl,
+          sellerKey: seller.sellerKey,
+          sellerName: seller.sellerName,
+          sourceUrl: pageToken,
+          discoveredAt: nowIso()
+        })
+        if (added) {
+          newSellers += 1
+        }
+      }
+      const nextPagePath = normalizeNextPagePath(feedPage.nextPagePath, `${ctx.config.ozonApiOrigin}${pageToken}`)
+      await writeCategoryPageRecord(ctx.config, "seller-feed", pageToken, {
+        discoveryMode: "seller_feed",
+        pageToken,
+        nextPageToken: nextPagePath,
+        sellers: feedPage.sellers,
+        sellerUrls: feedPage.sellers.map((seller) => seller.sellerUrl),
+        capturedAt: nowIso()
+      } satisfies JsonValue)
+      feed.lastPageToken = pageToken
+      feed.nextPagePath = nextPagePath
+      feed.pagesVisited += 1
+      feed.status = nextPagePath === null ? "done" : "pending"
+      feed.updatedAt = nowIso()
+      ctx.runCounters.pagesProcessed += 1
+      ctx.state.stats.sellerFeedPagesVisited += 1
+      log("seller_feed_page_completed", {
+        workerId,
+        sellers: feedPage.sellers.length,
+        newSellers,
+        hasNextPage: nextPagePath !== null
+      })
+      await saveState(ctx.config, ctx.state)
+    } catch (error) {
+      feed.status = "pending"
+      feed.updatedAt = nowIso()
+      ctx.state.stats.sellerFeedPagesFailed += 1
+      if (error instanceof OzonBlockError) {
+        await setBlocked(ctx, error)
+        return
+      }
+      log("seller_feed_page_failed", { workerId, pageToken, reason: toErrorMessage(error) })
+      await saveState(ctx.config, ctx.state)
+    }
+  }
 }
 
 const categoryWorker = async (ctx: WorkerContext, workerId: number): Promise<void> => {
@@ -321,7 +403,7 @@ const productWorker = async (ctx: WorkerContext, workerId: number): Promise<void
     const item = ctx.state.pendingProducts.shift()
     if (item === undefined) {
       await new Promise((resolve) => setTimeout(resolve, 500))
-      if (ctx.state.pendingProducts.length === 0 && pickCategory(ctx.state) === null) {
+      if (ctx.state.pendingProducts.length === 0 && !hasDiscoveryPages(ctx.config, ctx.state)) {
         return
       }
       continue
@@ -337,6 +419,7 @@ const processProduct = async (ctx: WorkerContext, workerId: number, item: Produc
     log("product_started", { workerId, productUrl: item.productUrl })
     const json = await fetchEntrypointJson({
       context: ctx.browserContext,
+      config: ctx.config,
       pagePath: pagePathFromUrl(item.productUrl),
       timeoutMs: ctx.config.navigationTimeoutMs
     })
@@ -398,7 +481,11 @@ const sellerWorker = async (ctx: WorkerContext, workerId: number): Promise<void>
       const item = ctx.state.pendingSellers.shift()
       if (item === undefined) {
         await page.waitForTimeout(500)
-        if (ctx.state.pendingSellers.length === 0 && ctx.state.pendingProducts.length === 0 && pickCategory(ctx.state) === null) {
+        if (
+          ctx.state.pendingSellers.length === 0 &&
+          ctx.state.pendingProducts.length === 0 &&
+          !hasDiscoveryPages(ctx.config, ctx.state)
+        ) {
           return
         }
         continue
@@ -513,10 +600,10 @@ const runPool = async (count: number, run: (workerId: number) => Promise<void>):
   await Promise.all(workers)
 }
 
-const hasUnfinishedWork = (state: IndexerState): boolean =>
+const hasUnfinishedWork = (config: IndexerConfig, state: IndexerState): boolean =>
   state.pendingProducts.length > 0 ||
   state.pendingSellers.length > 0 ||
-  state.categories.some((category) => category.status !== "done" && category.nextPagePath !== null)
+  hasDiscoveryPages(config, state)
 
 const buildReport = (input: {
   readonly config: IndexerConfig
@@ -526,25 +613,27 @@ const buildReport = (input: {
   readonly stopReason: string
 }): RunReport => {
   const finishedAt = nowIso()
-  const unfinishedCategories = input.state.categories.filter((category) =>
-    category.status !== "done" && category.nextPagePath !== null
-  ).length
+  const unfinishedCategories = input.config.discoveryMode === "category"
+    ? input.state.categories.filter((category) => category.status !== "done" && category.nextPagePath !== null).length
+    : 0
   return {
     runId: `${input.startedAt.replaceAll(/[^0-9]/g, "").slice(0, 14)}-${sha1(finishedAt).slice(0, 8)}`,
     startedAt: input.startedAt,
     finishedAt,
     durationMs: Date.now() - input.startedAtMs,
-    shouldContinue: hasUnfinishedWork(input.state),
+    shouldContinue: hasUnfinishedWork(input.config, input.state),
     stopReason: input.stopReason,
     blockReason: input.state.blockReason,
     blockSource: input.state.blockSource,
     blockedUntil: input.state.blockedUntil,
     browserMode: input.config.headless ? "headless" : "headed-xvfb",
+    discoveryMode: input.config.discoveryMode,
     diagnosticsArtifacts: input.state.diagnosticsArtifacts,
     stats: input.state.stats,
     queue: {
       pendingProducts: input.state.pendingProducts.length,
       pendingSellers: input.state.pendingSellers.length,
+      sellerFeedPending: hasSellerFeedPage(input.state),
       unfinishedCategories
     }
   }
@@ -590,17 +679,24 @@ export const runTimedIndexer = async (config: IndexerConfig): Promise<RunReport>
     log("indexer_started", {
       durationMinutes: config.durationMinutes,
       browserMode: config.headless ? "headless" : "headed-xvfb",
+      discoveryMode: config.discoveryMode,
+      cookieMode: config.ozonCookie === null ? "missing" : "configured",
       artifactsDirectory: config.artifactsDirectory,
       categoryWorkers: config.maxCategoryWorkers,
       productWorkers: config.maxProductWorkers,
       sellerWorkers: config.maxSellerWorkers
     })
+    const discoveryWorkers = config.discoveryMode === "seller_feed"
+      ? [runPool(config.maxCategoryWorkers, (workerId) => sellerFeedWorker(workerContext, workerId))]
+      : [
+          runPool(config.maxCategoryWorkers, (workerId) => categoryWorker(workerContext, workerId)),
+          runPool(config.maxProductWorkers, (workerId) => productWorker(workerContext, workerId))
+        ]
     await Promise.all([
-      runPool(config.maxCategoryWorkers, (workerId) => categoryWorker(workerContext, workerId)),
-      runPool(config.maxProductWorkers, (workerId) => productWorker(workerContext, workerId)),
+      ...discoveryWorkers,
       runPool(config.maxSellerWorkers, (workerId) => sellerWorker(workerContext, workerId))
     ])
-    stopReason = workerContext.stopReason === "time_budget_exhausted" && !hasUnfinishedWork(state)
+    stopReason = workerContext.stopReason === "time_budget_exhausted" && !hasUnfinishedWork(config, state)
       ? "completed"
       : workerContext.stopReason
     await browserContext.close().catch(() => undefined)

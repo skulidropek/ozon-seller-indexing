@@ -8,6 +8,8 @@ export type JsonValue =
 
 export type LegalIdentifierType = "inn" | "ogrn" | "ogrnip" | "unknown"
 
+export type DiscoveryMode = "seller_feed" | "category"
+
 export type OzonBlockSource = "request_context" | "browser_page" | "seller_page" | "modal_page" | "unknown"
 
 export type SellerAboutFields = {
@@ -34,6 +36,14 @@ export type CategoryState = CategorySeed & {
   updatedAt: string
 }
 
+export type SellerFeedState = {
+  status: "pending" | "running" | "done" | "blocked"
+  nextPagePath: string | null
+  lastPageToken: string | null
+  pagesVisited: number
+  updatedAt: string
+}
+
 export type ProductQueueItem = {
   readonly productUrl: string
   readonly categoryId: string
@@ -51,6 +61,8 @@ export type SellerQueueItem = {
 export type IndexerStats = {
   categoryPagesVisited: number
   categoryPagesFailed: number
+  sellerFeedPagesVisited: number
+  sellerFeedPagesFailed: number
   productsDiscovered: number
   productsProcessed: number
   productsFailed: number
@@ -66,6 +78,7 @@ export type IndexerState = {
   readonly version: 1
   readonly createdAt: string
   updatedAt: string
+  sellerFeed: SellerFeedState
   categories: Array<CategoryState>
   pendingProducts: Array<ProductQueueItem>
   pendingSellers: Array<SellerQueueItem>
@@ -113,11 +126,13 @@ export type RunReport = {
   readonly blockSource: OzonBlockSource | null
   readonly blockedUntil: string | null
   readonly browserMode: "headless" | "headed-xvfb"
+  readonly discoveryMode: DiscoveryMode
   readonly diagnosticsArtifacts: ReadonlyArray<string>
   readonly stats: IndexerStats
   readonly queue: {
     readonly pendingProducts: number
     readonly pendingSellers: number
+    readonly sellerFeedPending: boolean
     readonly unfinishedCategories: number
   }
 }
@@ -139,6 +154,10 @@ export type IndexerConfig = {
   readonly blockCooldownMs: number
   readonly navigationTimeoutMs: number
   readonly headless: boolean
+  readonly discoveryMode: DiscoveryMode
+  readonly ozonApiOrigin: string
+  readonly ozonCookie: string | null
+  readonly sellerFeedStartPath: string
   readonly categories: ReadonlyArray<CategorySeed>
   readonly seedSellerUrls: ReadonlyArray<string>
 }
