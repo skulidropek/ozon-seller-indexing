@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto"
+
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright"
 
 import { extractSellerAboutFieldsFromText } from "./sellerAbout.js"
@@ -228,6 +230,17 @@ export const extractNextPagePath = (json: JsonValue): string | null => {
 const buildEntrypointUrl = (origin: string, pagePath: string): string =>
   `${origin}/api/entrypoint-api.bx/page/json/v2?url=${encodeURIComponent(pagePath)}`
 
+const chromeUserAgent =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+
+const ozonManifestVersion =
+  "frontend-ozon-ru:df4078d8a985eacdeefede81fd777148f87be11b,checkout-render-api:2ca2f4f229fe231bf4550031f98439ea64df2346,search-render-api:a0eaad67467046d6f20c733080dc11799bb4694d,sf-render-api:274b716169ea6ae0439153df72feb1b430ec495d,fav-render-api:9d3f1045703d16b2af09e0441efcfc9818d31001"
+
+const extractStartPageId = (pagePath: string): string | null => {
+  const parsed = new URL(pagePath, "https://ozon.com")
+  return parsed.searchParams.get("start_page_id")
+}
+
 export const redactCookieHeader = (cookie: string): string =>
   cookie
     .split(";")
@@ -241,16 +254,32 @@ export const redactCookieHeader = (cookie: string): string =>
 
 const entrypointHeaders = (input: {
   readonly config: IndexerConfig
+  readonly pagePath: string
   readonly referer: string
   readonly pagePrevious: string
 }): Record<string, string> => {
+  const parentRequestId = extractStartPageId(input.pagePath)
   const headers: Record<string, string> = {
     accept: "application/json",
-    "accept-language": "ru,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
+    "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+    "content-type": "application/json",
+    priority: "u=1, i",
     referer: input.referer,
+    "sec-ch-ua": '"Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"',
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-origin",
+    "user-agent": chromeUserAgent,
     "x-o3-app-name": "dweb_client",
     "x-o3-app-version": "release_5-5-2026_df4078d8",
-    "x-page-previous": input.pagePrevious
+    "x-o3-manifest-version": ozonManifestVersion,
+    "x-page-previous": input.pagePrevious,
+    "x-page-view-id": randomUUID()
+  }
+  if (parentRequestId !== null) {
+    headers["x-o3-parent-requestid"] = parentRequestId
   }
   if (input.config.ozonCookie !== null) {
     headers.cookie = input.config.ozonCookie
@@ -406,8 +435,7 @@ export const openContext = async (browser: Browser, config: IndexerConfig): Prom
   browser.newContext({
     locale: "ru-RU",
     timezoneId: "Europe/Moscow",
-    userAgent:
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
+    userAgent: chromeUserAgent,
     viewport: {
       width: 1365,
       height: 900
@@ -427,6 +455,7 @@ export const fetchEntrypointJson = async (input: {
   const requestUrl = buildEntrypointUrl(input.config.ozonApiOrigin, input.pagePath)
   const requestHeaders = entrypointHeaders({
     config: input.config,
+    pagePath: input.pagePath,
     referer: input.referer ?? `${input.config.ozonApiOrigin}/`,
     pagePrevious: input.pagePrevious ?? "unknown"
   })
