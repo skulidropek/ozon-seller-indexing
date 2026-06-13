@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-06-07T12:35:05.354Z",
-  "updatedAt": "2026-06-13T18:19:42.295Z",
+  "updatedAt": "2026-06-13T20:04:51.170Z",
   "categories": [
     {
       "id": "electronics",
@@ -309,7 +309,7 @@
   "seenProductUrls": [],
   "seenSellerKeys": [],
   "blockReason": "ozon_http_403:/seller/",
-  "blockedUntil": "2026-06-13T18:22:42.080Z",
+  "blockedUntil": "2026-06-13T20:07:50.684Z",
   "stats": {
     "categoryPagesVisited": 0,
     "categoryPagesFailed": 3,
@@ -321,9 +321,9 @@
     "sellersWithLegalDetails": 0,
     "sellersWithoutLegalDetails": 0,
     "sellersFailed": 0,
-    "blocksDetected": 60,
+    "blocksDetected": 61,
     "sellerFeedPagesVisited": 0,
-    "sellerFeedPagesFailed": 56
+    "sellerFeedPagesFailed": 57
   },
   "blockSource": "request_context",
   "diagnosticsArtifacts": [
@@ -444,13 +444,15 @@
     "artifacts/diagnostics/20260613165854-request--seller.txt",
     "artifacts/diagnostics/20260613165854-request--seller.json",
     "artifacts/diagnostics/20260613181942-request--seller.txt",
-    "artifacts/diagnostics/20260613181942-request--seller.json"
+    "artifacts/diagnostics/20260613181942-request--seller.json",
+    "artifacts/diagnostics/20260613200450-request--seller.txt",
+    "artifacts/diagnostics/20260613200450-request--seller.json"
   ],
   "sellerFeed": {
     "status": "pending",
     "nextPagePath": "/seller/",
     "lastPageToken": null,
     "pagesVisited": 0,
-    "updatedAt": "2026-06-13T18:19:42.080Z"
+    "updatedAt": "2026-06-13T20:04:50.683Z"
   }
 }
