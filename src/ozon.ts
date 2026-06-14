@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto"
 
-import { chromium, type Browser, type BrowserContext, type Page } from "playwright"
+import { launch } from "cloakbrowser"
+import { type Browser, type BrowserContext, type Page } from "playwright-core"
 
 import { extractSellerAboutFieldsFromText } from "./sellerAbout.js"
 import { writeBinaryArtifact, writeTextArtifact } from "./storage.js"
@@ -427,7 +428,7 @@ export const savePageDiagnostics = async (input: {
 }
 
 export const openBrowser = async (config: IndexerConfig): Promise<Browser> =>
-  chromium.launch({
+  launch({
     headless: config.headless
   })
 
