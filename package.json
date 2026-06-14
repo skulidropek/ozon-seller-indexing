@@ -22,8 +22,9 @@
   "author": "rikohomeless",
   "license": "MIT",
   "dependencies": {
+    "cloakbrowser": "latest",
     "effect": "^3.19.17",
-    "playwright": "^1.58.2"
+    "playwright-core": "^1.58.2"
   },
   "devDependencies": {
     "@types/node": "^24.10.13",
