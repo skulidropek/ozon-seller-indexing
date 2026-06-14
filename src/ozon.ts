@@ -445,6 +445,34 @@ export const openContext = async (browser: Browser, config: IndexerConfig): Prom
     javaScriptEnabled: true
   })
 
+export const captureStartupScreenshot = async (input: {
+  readonly context: BrowserContext
+  readonly config: IndexerConfig
+}): Promise<void> => {
+  const page = await input.context.newPage()
+  try {
+    const url = `${input.config.ozonApiOrigin}/seller/`
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: input.config.navigationTimeoutMs })
+    await page.waitForTimeout(2_000)
+    const screenshot = await captureDiagnosticScreenshot(page)
+    const capturedAt = nowIso()
+    const baseName = `${capturedAt.replaceAll(/[^0-9]/g, "").slice(0, 14)}-startup-browser-check`
+    const metadata: Record<string, unknown> = {
+      capturedAt,
+      label: "startup-browser-check",
+      url: page.url(),
+      title: await page.title().catch(() => null),
+      screenshot: { mode: screenshot.mode, error: screenshot.error }
+    }
+    if (screenshot.bytes !== null) {
+      await writeBinaryArtifact(input.config, `diagnostics/${baseName}.png`, screenshot.bytes)
+    }
+    await writeTextArtifact(input.config, `diagnostics/${baseName}.json`, JSON.stringify(metadata, null, 2))
+  } finally {
+    await page.close().catch(() => undefined)
+  }
+}
+
 export const fetchEntrypointJson = async (input: {
   readonly context: BrowserContext
   readonly config: IndexerConfig

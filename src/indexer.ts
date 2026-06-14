@@ -14,6 +14,7 @@ import {
 } from "./storage.js"
 import { DelayGate, hasTimeForMoreWork } from "./rateLimit.js"
 import {
+  captureStartupScreenshot,
   extractNextPagePath,
   extractProductUrls,
   extractSellerAboutWithPage,
@@ -685,6 +686,9 @@ export const runTimedIndexer = async (config: IndexerConfig): Promise<RunReport>
       categoryWorkers: config.maxCategoryWorkers,
       productWorkers: config.maxProductWorkers,
       sellerWorkers: config.maxSellerWorkers
+    })
+    await captureStartupScreenshot({ context: browserContext, config }).catch((error: unknown) => {
+      log("startup_screenshot_failed", { error: String(error) })
     })
     const discoveryWorkers = config.discoveryMode === "seller_feed"
       ? [runPool(config.maxCategoryWorkers, (workerId) => sellerFeedWorker(workerContext, workerId))]
